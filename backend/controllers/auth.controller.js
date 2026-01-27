@@ -72,14 +72,42 @@ export const signup = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		console.log(error);
+		console.log("Error in signup controller", error);
 		res.status(500).json(error);
 	}
 };
 
 // login
 export const login = async (req, res) => {
-	res.send("login route called");
+	try {
+		console.log("Inside login controller");
+		const { email, password } = req.body;
+		const user = await User.findOne({ email });
+
+		if (user && (await user.comparePassword(password))) {
+			const { accessToken, refreshToken } = generateToken(user._id);
+
+			await storeRefreshToken(user._id, refreshToken);
+			setCookies(res, accessToken, refreshToken);
+
+			res.status(200).json({
+				message: "User logged in successfully",
+				user: {
+					_id: user._id,
+					name: user.name,
+					email: user.email,
+					role: user.role,
+				},
+			});
+		} else {
+			res
+				.status(404)
+				.json({ message: "User not found or Invalid credentials" });
+		}
+	} catch (error) {
+		console.log("Error in login controller", error);
+		res.status(500).json(error);
+	}
 };
 
 // logout
@@ -100,7 +128,7 @@ export const logout = async (req, res) => {
 		res.clearCookie("refreshToken");
 		res.status(200).json({ message: "Logged out successfully" });
 	} catch (error) {
-		console.log(error);
+		console.log("Error in logout controller", error);
 		res.status(500).json(error);
 	}
 };

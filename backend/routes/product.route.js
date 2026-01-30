@@ -1,8 +1,11 @@
 import express from "express";
 import {
 	createProduct,
+	deleteProduct,
 	featuredProducts,
 	getAllProducts,
+	getProductsByCategory,
+	getRecommendedProducts,
 } from "../controllers/product.controller.js";
 import { adminRoute, protectRoute } from "../middlewares/auth.middleware.js";
 
@@ -16,5 +19,14 @@ router.get("/featured", featuredProducts);
 
 // create product
 router.post("/", protectRoute, adminRoute, createProduct);
+
+// delete product
+router.post("/:id", protectRoute, adminRoute, deleteProduct);
+
+// get recommended products
+router.get("/recommendations", getRecommendedProducts);
+
+// get products by category
+router.get("/category/:category", getProductsByCategory);
 
 export default router;

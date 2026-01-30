@@ -6,6 +6,7 @@ import {
 	getAllProducts,
 	getProductsByCategory,
 	getRecommendedProducts,
+	toggleFeaturedProduct,
 } from "../controllers/product.controller.js";
 import { adminRoute, protectRoute } from "../middlewares/auth.middleware.js";
 
@@ -28,5 +29,8 @@ router.get("/recommendations", getRecommendedProducts);
 
 // get products by category
 router.get("/category/:category", getProductsByCategory);
+
+// toggle featured product
+router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);
 
 export default router;

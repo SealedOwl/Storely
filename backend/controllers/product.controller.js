@@ -1,4 +1,3 @@
-import { response } from "express";
 import cloudinary from "../lib/cloudinary.js";
 import { redis } from "../lib/redis.js";
 import { Product } from "../models/product.model.js";
@@ -24,14 +23,19 @@ export const featuredProducts = async (req, res) => {
 		// check if in cache
 		let featuredProducts = await redis.get("featured_products");
 		if (featuredProducts) {
-			return res.status(200).json(JSON.parse(featuredProducts));
+			return res
+				.status(200)
+				.json({
+					message: "Fetched fetured products",
+					featuredProducts: JSON.parse(featuredProducts),
+				});
 		}
 
 		// if not in redis, fetch from mongoDB
 		// .lean() - return js object , instead of mongoDB document, which is good for performance
 		featuredProducts = await Product.find({ isFeatured: true }).lean();
 
-		if (!featuredProducts) {
+		if (featuredProducts.length === 0) {
 			return res.status(404).json({ message: "No featured products found" });
 		}
 
@@ -57,8 +61,9 @@ export const createProduct = async (req, res) => {
 		let cloudinaryResponse = null;
 
 		if (image) {
-			cloudinaryResponse = await cloudinary.uploader.upload;
-			(image, { folder: "products" });
+			cloudinaryResponse = await cloudinary.uploader.upload(image, {
+				folder: "products",
+			});
 		}
 
 		const newProduct = await Product.create({
@@ -84,10 +89,10 @@ export const deleteProduct = async (req, res) => {
 	try {
 		console.log("Inside deleteProduct controller");
 
-		const product = await Product.findById(req.parms.id);
+		const product = await Product.findById(req.params.id);
 
 		if (!product) {
-			return res.status(404).JSON({ message: "Product not found" });
+			return res.status(404).json({ message: "Product not found" });
 		}
 
 		// console.log(product);
@@ -96,7 +101,7 @@ export const deleteProduct = async (req, res) => {
 		if (product.image) {
 			const publicId = product.image.split("/").pop().split(".")[0];
 			try {
-				await cloudinary.uploader.destroy(`/products/${publicId}`);
+				await cloudinary.uploader.destroy(`products/${publicId}`); //
 				console.log("deleted image from cloudinary");
 			} catch (error) {
 				console.log("Error deleting image from cloudinary", error);
@@ -104,7 +109,8 @@ export const deleteProduct = async (req, res) => {
 		}
 
 		// delete product
-		await Product.findByIdAndDelete(req.parms.id);
+		await Product.findByIdAndDelete(req.params.id);
+		res.status(200).json({ message: "Product deleted successfully" });
 	} catch (error) {
 		console.log("Error in deleteProduct controller", error);
 		res.status(500).json(error);
@@ -116,6 +122,7 @@ export const getRecommendedProducts = async (req, res) => {
 	try {
 		console.log("Inside getRecommendedProducts controller");
 
+		// get 3 random recommended products
 		const recommendedProducts = await Product.aggregate([
 			{ $sample: { $size: 3 } },
 			{
@@ -143,11 +150,11 @@ export const getProductsByCategory = async (req, res) => {
 	try {
 		console.log("Inside getProductsByCategory controller");
 
-		const { category } = req.params.category;
+		const { category } = req.params;
 
 		const categoryProducts = await Product.find({ category });
 
-		response
+		res
 			.status(200)
 			.json({ message: "get products by category", categoryProducts });
 	} catch (error) {
@@ -155,3 +162,40 @@ export const getProductsByCategory = async (req, res) => {
 		res.status(500).json(error);
 	}
 };
+
+// toggle featured product
+export const toggleFeaturedProduct = async (req, res) => {
+	try {
+		console.log("Inside toggleFeaturedProduct controller");
+
+		const { id } = req.params;
+
+		const product = await Product.findById(id);
+
+		if (product) {
+			product.isFeatured = !product.isFeatured;
+			const updatedProduct = await product.save();
+
+			// update in cache
+			await updateFeaturedProductsCache();
+
+			res
+				.status(200)
+				.json({ message: "Product updated successfully", updatedProduct });
+		} else {
+			res.status(404).json({ message: "Product not found" });
+		}
+	} catch (error) {
+		console.log("Error in toggleFeaturedProduct controller", error);
+		res.status(500).json(error);
+	}
+};
+
+async function updateFeaturedProductsCache() {
+	try {
+		const featuredProducts = await Product.find({ isFeatured: true }).lean();
+		await redis.set("featured_products", JSON.stringify(featuredProducts));
+	} catch (error) {
+		console.log("Error in updateFeaturedProductsCache function");
+	}
+}

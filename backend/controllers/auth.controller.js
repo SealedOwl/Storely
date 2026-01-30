@@ -101,7 +101,7 @@ export const login = async (req, res) => {
 			});
 		} else {
 			res
-				.status(404)
+				.status(401)
 				.json({ message: "User not found or Invalid credentials" });
 		}
 	} catch (error) {
@@ -144,10 +144,7 @@ export const refreshToken = async (req, res) => {
 			return res.status(401).json({ message: "No refresh token provided" });
 		}
 
-		const decoded = await jwt.verify(
-			refreshToken,
-			process.env.REFRESH_TOKEN_SECRET,
-		);
+		const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 		const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
 
 		if (storedToken !== refreshToken) {

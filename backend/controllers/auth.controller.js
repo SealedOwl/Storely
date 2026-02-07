@@ -170,3 +170,14 @@ export const refreshToken = async (req, res) => {
 		res.status(500).json(error);
 	}
 };
+
+export const getProfile = async (req, res) => {
+	try {
+		console.log("Inside getProfile controller");
+
+		res.status(200).json(req.user);
+	} catch (error) {
+		console.log("Error in getProfile controller", error);
+		res.status(500).json(error);
+	}
+};

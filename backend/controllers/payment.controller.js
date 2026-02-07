@@ -13,6 +13,7 @@ export const createCheckoutSession = async (req, res) => {
 
 		let totalAmount = 0;
 
+		// for stripe
 		const lineItems = products.map((product) => {
 			const amount = Math.round(product.price * 100); // paise/cents
 			totalAmount += amount * product.quantity;

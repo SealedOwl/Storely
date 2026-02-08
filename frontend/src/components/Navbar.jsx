@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 function Navbar() {
-	const user = true;
+	const user = false;
 	const isAdmin = false;
 	return (
 		<header className="w-full fixed top-0 left-0 z-40 bg-opacity-90 backdrop-blur-md shadow-lg">

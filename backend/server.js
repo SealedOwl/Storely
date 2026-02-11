@@ -14,7 +14,7 @@ dotenv.config();
 
 const app = express();
 
-app.use(express.json()); // allows to parse body of req
+app.use(express.json({ limit: "10mb" })); // allows to parse body of req
 app.use(cookieParser()); // parse cookies
 app.use(
 	cors({

@@ -23,12 +23,10 @@ export const featuredProducts = async (req, res) => {
 		// check if in cache
 		let featuredProducts = await redis.get("featured_products");
 		if (featuredProducts) {
-			return res
-				.status(200)
-				.json({
-					message: "Fetched fetured products",
-					featuredProducts: JSON.parse(featuredProducts),
-				});
+			return res.status(200).json({
+				message: "Fetched fetured products",
+				featuredProducts: JSON.parse(featuredProducts),
+			});
 		}
 
 		// if not in redis, fetch from mongoDB
@@ -110,6 +108,10 @@ export const deleteProduct = async (req, res) => {
 
 		// delete product
 		await Product.findByIdAndDelete(req.params.id);
+
+		// update cache after deletion
+		await updateFeaturedProductsCache();
+
 		res.status(200).json({ message: "Product deleted successfully" });
 	} catch (error) {
 		console.log("Error in deleteProduct controller", error);

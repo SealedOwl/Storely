@@ -22,7 +22,7 @@ router.get("/featured", featuredProducts);
 router.post("/", protectRoute, adminRoute, createProduct);
 
 // delete product
-router.post("/:id", protectRoute, adminRoute, deleteProduct);
+router.delete("/:id", protectRoute, adminRoute, deleteProduct);
 
 // get recommended products
 router.get("/recommendations", getRecommendedProducts);

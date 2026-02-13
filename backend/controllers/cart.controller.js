@@ -44,25 +44,32 @@ export const getCartProducts = async (req, res) => {
 			);
 			return { ...product.toJSON(), quantity: item.quantity };
 		});
-		res.status(200).json(cartItems);
+		res.status(200).json({ cartItems });
 	} catch (error) {
 		console.log("Error in getCartProducts controller");
 		res.status(500).json(error);
 	}
 };
 
-// remove all from cart
+// remove all of a product from cart
 export const removeAllFromCart = async (req, res) => {
 	try {
 		console.log("Inside removeAllFromCart controller");
 
+		const { productId } = req.body;
 		const user = req.user;
 
-		user.cartItems = [];
+		if (!productId) {
+			user.cartItems = [];
+		} else {
+			user.cartItems = user.cartItems.filter(
+				(item) => item.product.toString() !== productId,
+			);
+		}
+
 		await user.save();
 
 		res.status(200).json({
-			message: "Successfully removed all products from cart",
 			cartItems: user.cartItems,
 		});
 	} catch (error) {

@@ -126,7 +126,7 @@ export const getRecommendedProducts = async (req, res) => {
 
 		// get 3 random recommended products
 		const recommendedProducts = await Product.aggregate([
-			{ $sample: { $size: 3 } },
+			{ $sample: { size: 3 } },
 			{
 				$project: {
 					_id: 1,

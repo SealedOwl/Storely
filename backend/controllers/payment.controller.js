@@ -5,7 +5,7 @@ export const createCheckoutSession = async (req, res) => {
 	try {
 		console.log("Inside createCheckoutSession controller");
 
-		const products = req.body;
+		const { products } = req.body;
 
 		if (!Array.isArray(products) || products.length === 0) {
 			return res.status(400).json({ error: "Invalid or empty products array" });
@@ -27,6 +27,7 @@ export const createCheckoutSession = async (req, res) => {
 					},
 					unit_amount: amount,
 				},
+				quantity: product.quantity || 1,
 			};
 		});
 
@@ -48,7 +49,13 @@ export const createCheckoutSession = async (req, res) => {
 			},
 		});
 
-		res.status(200).json({ id: session.id, totalAmount: totalAmount / 100 });
+		res
+			.status(200)
+			.json({
+				id: session.id,
+				totalAmount: totalAmount / 100,
+				url: session.url,
+			});
 	} catch (error) {
 		console.log("Error in createCheckoutSession controller", error);
 		res.status(500).json(error);

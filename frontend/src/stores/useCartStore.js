@@ -84,4 +84,9 @@ export const useCartStore = create((set, get) => ({
 			toast.error(error.response?.data?.message || "An error occurred");
 		}
 	},
+
+	// clear cart
+	clearCart: async () => {
+		set({ cart: [], total: 0 });
+	},
 }));

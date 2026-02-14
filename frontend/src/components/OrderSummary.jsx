@@ -3,10 +3,26 @@ import { useCartStore } from "../stores/useCartStore";
 import { Link } from "react-router-dom";
 import { MoveRight } from "lucide-react";
 import axios from "../lib/axios";
+import toast from "react-hot-toast";
 
 const OrderSummary = () => {
 	const { total, cart } = useCartStore();
 	const formattedTotal = total.toFixed(2);
+
+	const handlePayment = async () => {
+		try {
+			const res = await axios.post(`/payments/create-checkout-session`, {
+				products: cart,
+			});
+
+			// console.log("Checkout URL:", res.data.url);
+
+			window.location.href = res.data.url;
+		} catch (error) {
+			toast.error("Error in payment");
+			console.error(error);
+		}
+	};
 
 	return (
 		<motion.div
@@ -29,9 +45,9 @@ const OrderSummary = () => {
 
 				<motion.button
 					className="cursor-pointer flex w-full items-center justify-center rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-sky-600 focus:outline-none focus:ring-4 focus:ring-sky-300"
-					whileHover={{ scale: 1.05 }}
+					whileHover={{ scale: 1.02 }}
 					whileTap={{ scale: 0.95 }}
-					// onClick={handlePayment}
+					onClick={handlePayment}
 				>
 					Proceed to Checkout
 				</motion.button>

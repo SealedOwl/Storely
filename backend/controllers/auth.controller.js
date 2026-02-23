@@ -3,6 +3,10 @@ import jwt from "jsonwebtoken";
 
 import { redis } from "../lib/redis.js";
 
+import { OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 const generateToken = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
 		expiresIn: "15m",
@@ -45,6 +49,11 @@ export const signup = async (req, res) => {
 		console.log("Inside signup controller");
 
 		const { name, email, password } = req.body;
+
+		if (!name || !email || !password) {
+			return res.status(400).json({ message: "All fields are required" });
+		}
+
 		const existingUser = await User.findOne({ email });
 
 		if (existingUser) {
@@ -179,5 +188,58 @@ export const getProfile = async (req, res) => {
 	} catch (error) {
 		console.log("Error in getProfile controller", error);
 		res.status(500).json(error);
+	}
+};
+
+// google auth
+export const googleAuth = async (req, res) => {
+	try {
+		console.log("Inside googleAuth controller");
+
+		const { credential } = req.body;
+
+		if (!credential) {
+			return res.status(400).json({ message: "No credential provided" });
+		}
+
+		//  Verify token with Google
+		const ticket = await client.verifyIdToken({
+			idToken: credential,
+			audience: process.env.GOOGLE_CLIENT_ID,
+		});
+
+		const payload = ticket.getPayload();
+
+		const { email, name, sub: googleId } = payload;
+
+		//  Find user by email
+		let user = await User.findOne({ email });
+
+		//  If user does not exist: create
+		if (!user) {
+			user = await User.create({
+				name,
+				email,
+				googleId,
+			});
+		}
+
+		//  If user exists but doesn't have googleId: link account
+		if (!user.googleId) {
+			user.googleId = googleId;
+			await user.save();
+		}
+
+		//  Generate tokens
+		const { accessToken, refreshToken } = generateToken(user._id);
+		await storeRefreshToken(user._id, refreshToken);
+
+		// set cookie
+		setCookies(res, accessToken, refreshToken);
+
+		res.status(200).json({ user });
+	} catch (error) {
+		console.log("Error in googleAuth controller", error);
+		res.status(401).json({ message: "Google authentication failed" });
 	}
 };

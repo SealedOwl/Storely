@@ -59,4 +59,16 @@ export const useUserStore = create((set, get) => ({
 			set({ checkingAuth: false, user: null });
 		}
 	},
+
+	// google login
+	googleLogin: async (credential) => {
+		set({ loading: true });
+		try {
+			const res = await axios.post("/auth/google", { credential });
+			set({ user: res.data.user, loading: false });
+		} catch (error) {
+			set({ loading: false });
+			toast.error(error.response?.data?.message || "Google login failed");
+		}
+	},
 }));

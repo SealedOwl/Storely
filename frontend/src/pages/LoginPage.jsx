@@ -1,14 +1,24 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader, Lock, LogIn, Mail } from "lucide-react";
+import {
+	ArrowRight,
+	Eye,
+	EyeOff,
+	Loader,
+	Lock,
+	LogIn,
+	Mail,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
+import { GoogleLogin } from "@react-oauth/google";
 
 function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [showpassword, setShowPassword] = useState(false);
 
-	const { login, loading } = useUserStore();
+	const { login, loading, googleLogin } = useUserStore();
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
@@ -73,13 +83,28 @@ function LoginPage() {
 									<Lock className="h-5 w-5 text-gray-400" aria-hidden="true" />
 								</div>
 								<input
-									type="password"
+									type={showpassword ? "text" : "password"}
 									id="password"
 									required
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
 									className="block w-full px-3 py-2 pl-10 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500"
 								/>
+								<div className="absolute inset-y-0 right-2 pl-3 flex items-center cursor-pointer ">
+									{showpassword ? (
+										<Eye
+											className="h-5 w-5 opacity-50 hover:opacity-80"
+											aria-hidden="true"
+											onClick={() => setShowPassword((prev) => !prev)}
+										/>
+									) : (
+										<EyeOff
+											className="h-5 w-5 opacity-50 hover:opacity-80"
+											aria-hidden="true"
+											onClick={() => setShowPassword((prev) => !prev)}
+										/>
+									)}
+								</div>
 							</div>
 						</div>
 
@@ -106,15 +131,26 @@ function LoginPage() {
 						</button>
 					</form>
 
-					<p className="mt-8 text-center text-sm text-gray-500">
-						Not a member?{" "}
-						<Link
-							to={"/signup"}
-							className="font-medium text-sky-400 hover:text-sky-500"
-						>
-							Sign up now <ArrowRight className="inline h-4 w-4" />{" "}
-						</Link>
-					</p>
+					<div className="mt-4 flex flex-col items-center gap-4">
+						<GoogleLogin
+							onSuccess={(credentialResponse) => {
+								googleLogin(credentialResponse.credential);
+							}}
+							onError={() => {
+								console.log("Google Login Failed");
+							}}
+						/>
+
+						<p className=" text-center text-sm text-gray-500">
+							Not a member?{" "}
+							<Link
+								to={"/signup"}
+								className="font-medium text-sky-400 hover:text-sky-500"
+							>
+								Sign up now <ArrowRight className="inline h-4 w-4" />{" "}
+							</Link>
+						</p>
+					</div>
 				</div>
 			</motion.div>
 		</div>
